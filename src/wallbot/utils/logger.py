@@ -1,35 +1,38 @@
-import locale
 import logging
-import sys
 from logging.handlers import RotatingFileHandler
-
-from src.wallbot.config.settings import PROFILE
+import os
+import locale
+from datetime import datetime
 
 
 def setup_logger():
-    log_path = 'wallbot.log'
-    level = logging.DEBUG
+    # Intentar establecer locale en español, pero sin romper si no existe
+    try:
+        # Primero probar con es_ES.UTF-8 (Linux)
+        locale.setlocale(locale.LC_ALL, 'es_ES.UTF-8')
+    except locale.Error:
+        try:
+            # Probar con es_ES genérico (a veces existe)
+            locale.setlocale(locale.LC_ALL, 'es_ES')
+        except locale.Error:
+            # Último recurso: locale por defecto del sistema
+            locale.setlocale(locale.LC_ALL, '')
 
-    if PROFILE is None:
-        log_path = '/logs/' + log_path
-        level = logging.INFO
-        # Configuración solo con archivo cuando PROFILE no está definido
-        logging.basicConfig(
-            handlers=[RotatingFileHandler(log_path, maxBytes=1000000, backupCount=10)],
-            level=level,
-            format='%(asctime)s %(message)s',
-            datefmt='%m/%d/%Y %H:%M:%S'
-        )
-    else:
-        # Configuración con archivo y salida estándar cuando PROFILE está definido
-        logging.basicConfig(
-            handlers=[
-                RotatingFileHandler(log_path, maxBytes=1000000, backupCount=10),
-                logging.StreamHandler(sys.stdout)
-            ],
-            level=level,
-            format='%(asctime)s %(message)s',
-            datefmt='%m/%d/%Y %H:%M:%S'
-        )
+    # Ruta del log
+    log_dir = os.getenv("LOG_DIR", ".")
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir, exist_ok=True)
 
-    locale.setlocale(locale.LC_ALL, 'es_ES.UTF-8')
+    log_path = os.path.join(log_dir, "wallbot.log")
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(message)s",
+        datefmt="%m/%d/%Y %H:%M:%S",
+        handlers=[
+            RotatingFileHandler(log_path, maxBytes=1_000_000, backupCount=10),
+            logging.StreamHandler()
+        ]
+    )
+
+    logging.info("Logger inicializado")
