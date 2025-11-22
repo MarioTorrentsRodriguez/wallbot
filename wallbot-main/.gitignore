@@ -1,0 +1,9 @@
+__pycache__
+.idea/
+venv/
+db.sqlite
+*.log
+*.tar
+log
+wallbot.log.*
+.DS_Store
